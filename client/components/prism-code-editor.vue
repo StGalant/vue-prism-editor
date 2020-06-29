@@ -29,7 +29,7 @@ export default {
     },
     text: {
       type: String,
-      default: '\n',
+      default: '',
     },
     newPaddingChars: {
       type: Array,
@@ -56,7 +56,7 @@ export default {
 
   mounted() {
     this.isFirefox = navigator.userAgent.toLowerCase().includes('firefox')
-    this.$refs.editor.innerHTML = this.highlightText(this.editorText())
+    this.$refs.editor.innerHTML = this.highlightText(this.text)
     if (this.focus) this.$refs.editor.focus()
   },
 
