@@ -1,0 +1,82 @@
+:root {
+  /* editor colors */
+  --prism-editor-background-color: #272822;
+  --prism-editor-text-color: #f8f8f2;
+  --prism-editor-linenumber-bg-color: #343434;
+  --prism-editor-linenumber-color: slategray;
+  --prism-editor-selection-bg-color: #5a5c4c;
+  /* --prism-editor-selection-text-color: #272822; */
+
+  /* token colors */
+  --prism-token-comment-color: slategray;
+  --prism-token-prolog-color: slategray;
+  --prism-token-doctype-color: slategray;
+  --prism-token-cdata-color: slategray;
+  --prism-token-punctuation-color: #f8f8f2;
+  --prism-token-namespace-color: #f8f8f2;
+  --prism-token-property-color: #f92672;
+  --prism-token-tag-color: #f92672;
+  --prism-token-constant-color: #f92672;
+  --prism-token-symbol-color: #f92672;
+  --prism-token-deleted-color: #f92672;
+  --prism-token-number-color: #ae81ff;
+  --prism-token-boolean-color: #ae81ff;
+  --prism-token-selector-color: #a6e22e;
+  --prism-token-attr-name-color: #a6e22e;
+  --prism-token-string-color: #a6e22e;
+  --prism-token-char-color: #a6e22e;
+  --prism-token-builtin-color: #a6e22e;
+  --prism-token-inserted-color: #a6e22e;
+  --prism-token-operator-color: #f8f8f2;
+  --prism-token-variable-color: #f8f8f2;
+  --prism-token-entity-color: #f8f8f2;
+  --prism-token-url-color: #f8f8f2;
+  --prism-token-atrule-color: #e6db74;
+  --prism-token-attr-value-color: #e6db74;
+  --prism-token-function-color: #e6db74;
+  --prism-token-class-name-color: #e6db74;
+  --prism-token-keyword-color: #66d9ef;
+  --prism-token-regex-color: #fd971f;
+  --prism-token-important-color: #fd971f;
+}
+
+.prism-theme-light {
+  /* editor colors */
+  --prism-editor-background-color: #f5f2f0;
+  --prism-editor-text-color: black;
+  --prism-editor-linenumber-bg-color: #f5f2f0;
+  --prism-editor-linenumber-color: slategray;
+  --prism-editor-selection-bg-color: #b3d4fc;
+  /* --prism-editor-selection-text-color: black; */
+  /* token colors */
+  --prism-token-comment-color: slategray;
+  --prism-token-prolog-color: slategray;
+  --prism-token-doctype-color: slategray;
+  --prism-token-cdata-color: slategray;
+  --prism-token-punctuation-color: #999;
+  --prism-token-namespace-color: #999;
+  --prism-token-property-color: #905;
+  --prism-token-tag-color: #905;
+  --prism-token-constant-color: #905;
+  --prism-token-symbol-color: #905;
+  --prism-token-deleted-color: #905;
+  --prism-token-number-color: #905;
+  --prism-token-boolean-color: #905;
+  --prism-token-selector-color: #690;
+  --prism-token-attr-name-color: #690;
+  --prism-token-string-color: #690;
+  --prism-token-char-color: #690;
+  --prism-token-builtin-color: #690;
+  --prism-token-inserted-color: #690;
+  --prism-token-operator-color: #9a6e3a;
+  --prism-token-variable-color: #e90;
+  --prism-token-entity-color: #9a6e3a;
+  --prism-token-url-color: #9a6e3a;
+  --prism-token-atrule-color: #07a;
+  --prism-token-attr-value-color: #07a;
+  --prism-token-function-color: #dd4a68;
+  --prism-token-class-name-color: #dd4a68;
+  --prism-token-keyword-color: #07a;
+  --prism-token-regex-color: #e90;
+  --prism-token-important-color: #e90;
+}

@@ -1,0 +1,44 @@
+:root {
+  /* Brand colors */
+  --brand-color: theme('colors.gray.500');
+  --brand-color-light: theme('colors.gray.400');
+  --brand-color-dark: theme('colors.gray.600');
+  /* Main colors */
+  --background-color: theme('colors.white');
+  --background-color-secondary: theme('colors.gray.200');
+  --text-color: theme('colors.gray.900');
+  --text-color-secondary: theme('colors.gray.600');
+  --text-color-heading: theme('colors.gray.900');
+  /* Interactive colors */
+  --action-bg-color: theme('colors.gray.500');
+  --action-bg-color-secondary: theme('colors.white');
+  --action-text-color: theme('colors.white');
+  --action-text-color-secondary: theme('colors.gray.700');
+  /* Notices colors */
+  --success-color: theme('colors.green.500');
+  --success-contrast-color: theme('colors.white') /* Warning colors */;
+  --warning-color: theme('colors.yellow.400');
+  --warning-contrast-color: theme('colors.gray.800') /* Error colors */;
+  --danger-color: theme('colors.red.500');
+  --dander-contrast-color: theme('colors.white');
+}
+
+/* For auto theming support */
+/*@media (prefers-color-scheme: dark) {
+  :root {
+  }
+} */
+
+/* hover effects */
+.hover\:br-110:hover {
+  filter: brightness(110%);
+}
+.hover\:br-115:hover {
+  filter: brightness(115%);
+}
+.hover\:br-120:hover {
+  filter: brightness(120%);
+}
+.hover\:br-125:hover {
+  filter: brightness(125%);
+}
