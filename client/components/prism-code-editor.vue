@@ -51,17 +51,26 @@ export default {
       isFirefox: false,
       isChanged: false,
       scrollPadding: 36,
+      currentText: '',
     }
+  },
+
+  watch: {
+    currentText() {
+      this.$emit('input', this.currentText)
+    },
   },
 
   mounted() {
     this.isFirefox = navigator.userAgent.toLowerCase().includes('firefox')
     this.$refs.editor.innerHTML = this.highlightText(this.text)
     if (this.focus) this.$refs.editor.focus()
+    this.currentText = this.text
   },
 
   methods: {
     highlightText(text) {
+      this.currentText = text
       let h = prism.highlight(text, prism.languages.markup, 'markup')
       if (this.isFirefox) {
         h = h.replace(/\n\r?/g, '<br><span class="new-line"></span>')
