@@ -6,7 +6,7 @@
       ref="editor"
       class="editor line-numbers"
       spellcheck="false"
-      contenteditable="true"
+      :contenteditable="editable"
       @keydown="onKeyDown"
       @paste="onPaste"
     ><code><span class="new-line"></span><br></code></pre>
@@ -18,6 +18,10 @@ import prism from 'prismjs'
 
 export default {
   props: {
+    editable: {
+      type: Boolean,
+      default: true,
+    },
     focus: {
       type: Boolean,
       default: false,
@@ -439,7 +443,6 @@ export default {
         }
       }
 
-      this.isChanged = true
       const editor = this.$refs.editor
       const cursor = this.getCursor(editor)
 
@@ -455,6 +458,8 @@ export default {
     },
 
     onPaste(event) {
+      if (!this.editable) return
+
       event.preventDefault()
       const editor = this.$refs.editor
       if (this.isSelection()) {
