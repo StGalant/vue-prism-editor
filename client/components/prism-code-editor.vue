@@ -8,7 +8,6 @@
       spellcheck="false"
       contenteditable="true"
       @keydown="onKeyDown"
-      @keyup="onKeyUp"
       @paste="onPaste"
     ><code><span class="new-line"></span><br></code></pre>
   </div>
@@ -27,6 +26,10 @@ export default {
       type: Number,
       default: 2,
     },
+    scrollPadding: {
+      type: Number,
+      default: 36,
+    },
     text: {
       type: String,
       default: '',
@@ -39,8 +42,9 @@ export default {
       type: Object,
       default: () => {
         return {
-          open: ['{', '(', '['],
-          close: ['}', ')', ']'],
+          '{': '}',
+          '(': ')',
+          '[': ']',
         }
       },
     },
@@ -49,9 +53,8 @@ export default {
   data() {
     return {
       isFirefox: false,
-      isChanged: false,
-      scrollPadding: 36,
       currentText: '',
+      cursor: 0,
     }
   },
 
@@ -86,13 +89,6 @@ export default {
       } else {
         return this.$refs.editor.textContent
       }
-    },
-
-    highlightEditor() {
-      const editor = this.$refs.editor
-      const cursor = this.getCursor(editor)
-      editor.innerHTML = this.highlightText(this.editorText())
-      this.setCursor(editor, cursor)
     },
 
     scrollToCursor(scrollPadding = this.scrollPadding) {
@@ -180,7 +176,8 @@ export default {
       offset += prevSiblingsLength(current)
       return offset
     },
-    setCursor(editor, offset) {
+    setCursor(offset) {
+      const editor = this.$refs.editor
       function setSelection(startNode, startOffset) {
         if (startOffset < 0) {
           const r = document.createRange()
@@ -327,10 +324,8 @@ export default {
           editor.innerHTML = this.highlightText(
             innerText.substring(0, cursor) + '\n' + ' '.repeat(padding) + innerText.substring(cursor)
           )
-          editor.style.height = `${(+editor.firstChild.offsetHeight + fontSize * 2).toFixed(2)}px`
-          this.setCursor(editor, cursor + 1 + padding)
-          // scrollToCursor
-          this.isChanged = false
+          this.setCursor(cursor + 1 + padding)
+          return true
         }
       }
 
@@ -355,17 +350,16 @@ export default {
             editor.innerHTML = this.highlightText(
               innerText.substring(0, cursor - deleteCount) + innerText.substring(cursor)
             )
-            const fontSize = parseFloat(getComputedStyle(editor).fontSize)
-            editor.style.height = `${(+editor.firstChild.offsetHeight + fontSize * 2).toFixed(2)}px`
 
-            this.setCursor(editor, cursor - deleteCount)
+            this.setCursor(cursor - deleteCount)
           }
-          this.isChanged = false
+
+          return true
         }
       }
 
       const handleDelete = () => {
-        if (event.key === 'Delete') {
+        if (event.key === 'Delete' && !event.altKey && !event.ctrlKey && !event.metaKey) {
           // Delete
           let deleteCount = 1
           if (this.isSelection()) {
@@ -378,16 +372,15 @@ export default {
           editor.innerHTML = this.highlightText(
             innerText.substring(0, cursor) + innerText.substring(cursor + deleteCount)
           )
-          const fontSize = parseFloat(getComputedStyle(editor).fontSize)
-          editor.style.height = `${(+editor.firstChild.offsetHeight + fontSize * 2).toFixed(2)}px`
 
-          this.setCursor(editor, cursor)
-          this.isChanged = false
+          this.setCursor(cursor)
+
+          return true
         }
       }
 
       const handleTab = () => {
-        if (event.key === 'Tab') {
+        if (event.key === 'Tab' && !event.altKey && !event.ctrlKey && !event.metaKey) {
           const innerText = this.editorText()
           const lineOffset = getLineOffset(innerText, cursor)
           const spacesToTab = this.tabSize - (lineOffset % this.tabSize)
@@ -396,61 +389,69 @@ export default {
           editor.innerHTML = this.highlightText(
             innerText.substring(0, cursor) + ' '.repeat(spacesToTab) + innerText.substring(cursor)
           )
-          this.setCursor(editor, cursor + spacesToTab)
-          this.isChanged = false
+          this.setCursor(cursor + spacesToTab)
+
+          return true
         }
       }
 
       const handleSelfClosingChars = () => {
-        if (this.selfClosingChars.open.includes(event.key)) {
-          const i = this.selfClosingChars.open.findIndex((v) => v === event.key)
+        if (this.selfClosingChars[event.key] && !event.altKey && !event.ctrlKey && !event.metaKey) {
+          // TODO handle selection variant
           event.preventDefault()
+          const innerText = this.editorText()
+          editor.innerHTML = this.highlightText(
+            innerText.substring(0, cursor) + event.key + this.selfClosingChars[event.key] + innerText.substring(cursor)
+          )
+          this.setCursor(cursor + 1)
+          return true
+        }
+      }
 
-          document.execCommand('insertText', false, this.selfClosingChars.open[i] + this.selfClosingChars.close[i])
+      const handleChars = () => {
+        if (
+          event.key.length === 1 &&
+          !this.selfClosingChars[event.key] &&
+          !event.altKey &&
+          !event.ctrlKey &&
+          !event.metaKey
+        ) {
+          event.preventDefault()
+          const innerText = this.editorText()
+          editor.innerHTML = this.highlightText(
+            innerText.substring(0, cursor) + event.key + innerText.substring(cursor)
+          )
 
-          this.setCursor(editor, cursor + 1)
+          this.setCursor(cursor + 1)
+
+          return true
+        }
+      }
+
+      const handleCut = () => {
+        if (event.ctrlKey && event.key === 'x' && !event.shiftKey && !event.altKey && !event.metaKey) {
+          event.preventDefault()
+          document.execCommand('cut', false)
+          const innerText = this.editorText()
+          editor.innerHTML = this.highlightText(innerText)
+          this.setCursor(cursor)
+          return true
         }
       }
 
       this.isChanged = true
       const editor = this.$refs.editor
       const cursor = this.getCursor(editor)
-      const fontSize = parseFloat(getComputedStyle(editor).fontSize)
 
-      handleEnter()
-      handleBackspace()
-      handleDelete()
-      handleTab()
-      handleSelfClosingChars()
+      handleEnter() ||
+        handleBackspace() ||
+        handleDelete() ||
+        handleTab() ||
+        handleCut() ||
+        handleSelfClosingChars() ||
+        handleChars()
 
-      if (
-        ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'End', 'Home', 'PageUp', 'PageDown'].includes(event.key)
-      ) {
-        // Navigation keys
-        this.isChanged = false
-      } else if (['Alt', 'Shift', 'Control', 'Meta', 'CapsLock', 'Fn', 'Scroll', 'ScrollLock'].includes(event.key)) {
-        // Meta keys
-        this.isChanged = false
-      } else if (event.ctrlKey && event.key === 'x' && !event.shiftKey && !event.altKey && !event.metaKey) {
-        this.isChanged = true
-      }
-
-      this.scrollToCursor(fontSize * 4)
-      if (this.isChanged) {
-        window.requestAnimationFrame(() => {
-          this.highlightEditor()
-        })
-      }
-    },
-
-    onKeyUp(event) {
-      // if (event.altKey || event.ctrlKey || event.metaKey) this.isChanged = false
-      // if (['Alt', 'Shift', 'Control', 'Meta', 'CapsLock', 'Fn', 'Scroll', 'ScrollLock'].includes(event.key)) {
-      //   this.isChanged = false
-      // }
-      // if (event.ctrlKey && event.key === 'x' && !event.shiftKey && !event.altKey && !event.metaKey) this.isChanged = true
-      // if (this.isChanged) this.highlightEditor()
-      // this.isChanged = false
+      this.scrollToCursor(this.scrollPadding)
     },
 
     onPaste(event) {
@@ -464,11 +465,8 @@ export default {
       const text = event.clipboardData.getData('text/plain')
 
       editor.innerHTML = this.highlightText(innerText.substring(0, cursor) + text + innerText.substring(cursor))
-      const fontSize = parseFloat(getComputedStyle(editor).fontSize)
-      editor.style.height = `${(+editor.firstChild.offsetHeight + fontSize * 2).toFixed(2)}px`
-
-      this.setCursor(this.$refs.editor, cursor + text.length)
-      this.scrollToCursor(fontSize * 4)
+      this.setCursor(cursor + text.length)
+      this.scrollToCursor(this.scrollPadding)
     },
   },
 }
@@ -509,6 +507,7 @@ export default {
   outline: none;
   min-width: 100%;
   min-height: 100%;
+  padding-bottom: 0.1rem;
 }
 
 .editor > code {

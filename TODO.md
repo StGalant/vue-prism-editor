@@ -1,5 +1,5 @@
-### Data flow
-
-Emit `input` event. Test payload variants (string, function, object)
+> ### Data flow
+>
+> Emit string - done.
 
 ### History
