@@ -4,10 +4,11 @@
     <pre
       id="editor"
       ref="editor"
-      class="editor line-numbers"
+      class="editor line-numbers lang-html"
       spellcheck="false"
       :contenteditable="editable"
       @keydown="onKeyDown"
+      @keyup="onKeyUp"
       @paste="onPaste"
     ><code><span class="new-line"></span><br></code></pre>
   </div>
@@ -51,6 +52,7 @@ export default {
           '[': ']',
         }
       },
+      highlightEditor: undefined,
     },
   },
 
@@ -59,37 +61,54 @@ export default {
       isFirefox: false,
       currentText: '',
       cursor: 0,
+      lang: 'markup',
     }
   },
 
-  watch: {
-    currentText() {
-      this.$emit('input', this.currentText)
+  // watch: {
+  //   currentText() {
+  //     this.$emit('input', this.currentText)
+  //   },
+  // },
+
+  computed: {
+    newLineHTML() {
+      return this.isFirefox ? '<br><span class="new-line"></span>' : '\n<span class="new-line"></span>'
     },
   },
-
   mounted() {
+    function debounce(cb, wait) {
+      let timeout = 0
+      return (...args) => {
+        clearTimeout(timeout)
+        timeout = window.setTimeout(() => {
+          // eslint-disable-next-line standard/no-callback-literal
+          cb(...args)
+        }, wait)
+      }
+    }
     this.isFirefox = navigator.userAgent.toLowerCase().includes('firefox')
     this.$refs.editor.innerHTML = this.highlightText(this.text)
     if (this.focus) this.$refs.editor.focus()
     this.currentText = this.text
+
+    this.highlightEditor = debounce(() => {
+      const cursor = this.getCursor()
+      this.$refs.editor.innerHTML = this.highlightText(this.currentText)
+      this.setCursor(cursor)
+    }, 10)
   },
 
   methods: {
     highlightText(text) {
-      this.currentText = text
-      let h = prism.highlight(text, prism.languages.markup, 'markup')
-      if (this.isFirefox) {
-        h = h.replace(/\n\r?/g, '<br><span class="new-line"></span>')
-      } else {
-        h = h.replace(/\n\r?/g, '\n<span class="new-line"></span>')
-      }
+      // this.currentText = text
+      const h = prism.highlight(text, prism.languages[this.lang], this.lang).replace(/\n/g, this.newLineHTML)
       return '<code><span class="new-line"></span>' + h + '<br>' + '</code>'
     },
 
     editorText() {
       if (this.isFirefox) {
-        return this.$refs.editor.innerText.replace(/\n$/, '')
+        return this.$refs.editor.innerText
       } else {
         return this.$refs.editor.textContent
       }
@@ -127,7 +146,7 @@ export default {
         }
       }
     },
-    getCursor(editor) {
+    getCursor() {
       function nodeLength(node) {
         if (node.nodeName === 'BR') return 1
         // eslint-disable-next-line unicorn/prefer-text-content
@@ -146,6 +165,7 @@ export default {
         return offset
       }
 
+      const editor = this.$refs.editor
       const s = window.getSelection()
       const r = s.getRangeAt(0)
       let current = r.startContainer
@@ -300,16 +320,16 @@ export default {
         return j
       }
 
-      function getPaddingFromCursor(text, cursor) {
-        let i = cursor - 1
-        let j = 0
-        while (i >= 0 && text[i] !== '\n') {
-          if (text[i] !== ' ') return 0
-          i--
-          j++
-        }
-        return j
-      }
+      // function getPaddingFromCursor(text, cursor) {
+      //   let i = cursor - 1
+      //   let j = 0
+      //   while (i >= 0 && text[i] !== '\n') {
+      //     if (text[i] !== ' ') return 0
+      //     i--
+      //     j++
+      //   }
+      //   return j
+      // }
 
       // Enter
       const handleEnter = () => {
@@ -317,17 +337,17 @@ export default {
           if (this.isSelection()) {
             document.execCommand('delete', false)
           }
-          event.preventDefault()
 
-          const innerText = this.editorText()
-          let padding = findPadding(innerText, cursor)
-          if (this.newPaddingChars.includes(innerText[cursor - 1])) {
+          let padding = findPadding(this.currentText, cursor)
+          if (this.newPaddingChars.includes(this.currentText[cursor - 1])) {
             padding += this.tabSize
           }
 
-          editor.innerHTML = this.highlightText(
-            innerText.substring(0, cursor) + '\n' + ' '.repeat(padding) + innerText.substring(cursor)
-          )
+          this.currentText =
+            this.currentText.substr(0, cursor) + '\n' + ' '.repeat(padding) + this.currentText.substr(cursor)
+          // Debouncing highlight results line numbers glitches
+          event.preventDefault()
+          this.highlightEditor()
           this.setCursor(cursor + 1 + padding)
           return true
         }
@@ -336,28 +356,28 @@ export default {
       const handleBackspace = () => {
         if (event.key === 'Backspace' && !event.altKey && !event.ctrlKey && !event.metaKey) {
           // Backspace
-          let deleteCount = 1
-          if (this.isSelection()) {
-            document.execCommand('delete', false)
-            deleteCount = 0
-          }
-          event.preventDefault()
-          const s = window.getSelection()
-          if (s.anchorNode !== editor) {
-            const innerText = this.editorText()
+          // let deleteCount = 1
+          // if (this.isSelection()) {
+          //   document.execCommand('delete', false)
+          //   deleteCount = 0
+          // }
+          // // event.preventDefault()
+          // const s = window.getSelection()
+          // if (s.anchorNode !== editor) {
+          //   const innerText = this.editorText()
 
-            const paddingToDelete = getPaddingFromCursor(innerText, cursor)
-            if (paddingToDelete) {
-              deleteCount = paddingToDelete % this.tabSize || this.tabSize
-            }
+          //   const paddingToDelete = getPaddingFromCursor(innerText, cursor)
+          //   if (paddingToDelete) {
+          //     deleteCount = paddingToDelete % this.tabSize || this.tabSize
+          //   }
 
-            editor.innerHTML = this.highlightText(
-              innerText.substring(0, cursor - deleteCount) + innerText.substring(cursor)
-            )
+          //   editor.innerHTML = this.highlightText(
+          //     innerText.substring(0, cursor - deleteCount) + innerText.substring(cursor)
+          //   )
 
-            this.setCursor(cursor - deleteCount)
-          }
-
+          //   this.setCursor(cursor - deleteCount)
+          // }
+          this.currentText = this.currentText.substr(0, cursor - 1) + this.currentText.substr(cursor)
           return true
         }
       }
@@ -403,10 +423,12 @@ export default {
         if (this.selfClosingChars[event.key] && !event.altKey && !event.ctrlKey && !event.metaKey) {
           // TODO handle selection variant
           event.preventDefault()
-          const innerText = this.editorText()
-          editor.innerHTML = this.highlightText(
-            innerText.substring(0, cursor) + event.key + this.selfClosingChars[event.key] + innerText.substring(cursor)
-          )
+          this.currentText =
+            this.currentText.substr(0, cursor) +
+            event.key +
+            this.selfClosingChars[event.key] +
+            this.currentText.substr(cursor)
+          document.execCommand('insertText', false, event.key + this.selfClosingChars[event.key])
           this.setCursor(cursor + 1)
           return true
         }
@@ -420,14 +442,7 @@ export default {
           !event.ctrlKey &&
           !event.metaKey
         ) {
-          event.preventDefault()
-          const innerText = this.editorText()
-          editor.innerHTML = this.highlightText(
-            innerText.substring(0, cursor) + event.key + innerText.substring(cursor)
-          )
-
-          this.setCursor(cursor + 1)
-
+          this.currentText = this.currentText.substr(0, cursor) + event.key + this.currentText.substr(cursor)
           return true
         }
       }
@@ -444,7 +459,7 @@ export default {
       }
 
       const editor = this.$refs.editor
-      const cursor = this.getCursor(editor)
+      const cursor = this.getCursor()
 
       handleEnter() ||
         handleBackspace() ||
@@ -454,23 +469,25 @@ export default {
         handleSelfClosingChars() ||
         handleChars()
 
-      this.scrollToCursor(this.scrollPadding)
+      // this.scrollToCursor(this.scrollPadding)
+    },
+
+    onKeyUp() {
+      this.highlightEditor()
     },
 
     onPaste(event) {
       if (!this.editable) return
 
       event.preventDefault()
-      const editor = this.$refs.editor
       if (this.isSelection()) {
         document.execCommand('delete', false)
       }
-      const cursor = this.getCursor(editor)
-      const innerText = this.editorText()
-      const text = event.clipboardData.getData('text/plain')
 
-      editor.innerHTML = this.highlightText(innerText.substring(0, cursor) + text + innerText.substring(cursor))
-      this.setCursor(cursor + text.length)
+      const cursor = this.getCursor()
+      const text = event.clipboardData.getData('text/plain')
+      document.execCommand('insertText', false, text)
+      this.currentText = this.currentText.substr(0, cursor) + text + this.currentText.substr(cursor)
       this.scrollToCursor(this.scrollPadding)
     },
   },
@@ -682,9 +699,7 @@ export default {
   left: 0;
 }
 
-.last-line {
-  height: 0;
-  width: 0;
-  user-select: none;
+br ::after {
+  content: '*';
 }
 </style>

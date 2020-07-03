@@ -30,7 +30,7 @@ export default {
   data() {
     return {
       text: '',
-      editable: false,
+      editable: true,
     }
   },
   methods: {
